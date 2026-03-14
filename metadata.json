@@ -1,0 +1,5 @@
+{
+  "name": "Credit Scoring Model",
+  "description": "An end-to-end machine learning solution for predicting creditworthiness with a modern dashboard and explainable AI.",
+  "requestFramePermissions": []
+}
