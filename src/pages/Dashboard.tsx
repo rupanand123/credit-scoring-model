@@ -5,8 +5,12 @@ import {
   PieChart, Pie, Cell, LineChart, Line, AreaChart, Area
 } from 'recharts';
 import { Activity, Target, Zap, ShieldCheck, History } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { db } from '../firebase';
+import { collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
 
 const Dashboard = () => {
+  const { user } = useAuth();
   const [metrics, setMetrics] = useState<ModelMetrics | null>(null);
   const [history, setHistory] = useState<any[]>([]);
 
@@ -15,12 +19,33 @@ const Dashboard = () => {
     mlService.train();
     setMetrics(mlService.getMetrics());
 
-    // Fetch history
-    fetch('/api/history')
-      .then(res => res.json())
-      .then(data => setHistory(data))
-      .catch(err => console.error(err));
-  }, []);
+    const fetchHistory = async () => {
+      if (user) {
+        // Fetch from Firestore
+        try {
+          const q = query(
+            collection(db, 'predictions'),
+            where('userId', '==', user.uid),
+            orderBy('timestamp', 'desc'),
+            limit(20)
+          );
+          const querySnapshot = await getDocs(q);
+          const docs = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          setHistory(docs);
+        } catch (err) {
+          console.error("Error fetching Firestore history:", err);
+        }
+      } else {
+        // Fetch from local API
+        fetch('/api/history')
+          .then(res => res.json())
+          .then(data => setHistory(data))
+          .catch(err => console.error(err));
+      }
+    };
+
+    fetchHistory();
+  }, [user]);
 
   if (!metrics) return <div className="text-center py-20">Loading Metrics...</div>;
 

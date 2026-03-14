@@ -1,8 +1,10 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ShieldCheck, LayoutDashboard, Info, Home, CreditCard } from 'lucide-react';
+import { ShieldCheck, LayoutDashboard, Info, Home, CreditCard, Coins, LogIn, LogOut } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { useAuth } from '../context/AuthContext';
+import { signInWithGoogle, logout } from '../firebase';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -10,10 +12,12 @@ function cn(...inputs: ClassValue[]) {
 
 const Navbar = () => {
   const location = useLocation();
+  const { user } = useAuth();
 
   const navItems = [
     { name: 'Home', path: '/', icon: Home },
     { name: 'Predict', path: '/predict', icon: CreditCard },
+    { name: 'Advisor', path: '/currency-advisor', icon: Coins },
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
     { name: 'About', path: '/about', icon: Info },
   ];
@@ -29,7 +33,7 @@ const Navbar = () => {
             </span>
           </div>
           <div className="hidden md:block">
-            <div className="flex items-baseline space-x-4">
+            <div className="flex items-center space-x-4">
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = location.pathname === item.path;
@@ -49,6 +53,26 @@ const Navbar = () => {
                   </Link>
                 );
               })}
+              
+              {user ? (
+                <div className="flex items-center gap-4 ml-4 pl-4 border-l border-white/10">
+                  <img src={user.photoURL || ''} alt={user.displayName || ''} className="w-8 h-8 rounded-full border border-emerald-500/20" />
+                  <button
+                    onClick={logout}
+                    className="text-slate-300 hover:text-white transition-colors"
+                  >
+                    <LogOut className="w-5 h-5" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={signInWithGoogle}
+                  className="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-slate-950 rounded-lg text-sm font-bold hover:bg-emerald-400 transition-all ml-4"
+                >
+                  <LogIn className="w-4 h-4" />
+                  Sign In
+                </button>
+              )}
             </div>
           </div>
         </div>

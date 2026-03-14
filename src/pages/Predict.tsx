@@ -3,9 +3,44 @@ import { useNavigate } from 'react-router-dom';
 import { mlService, CreditData } from '../services/MLService';
 import { motion } from 'motion/react';
 import { Calculator, AlertCircle, CheckCircle2, XCircle } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { db, auth as firebaseAuth } from '../firebase';
+import { collection, addDoc } from 'firebase/firestore';
+
+enum OperationType {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  LIST = 'list',
+  GET = 'get',
+  WRITE = 'write',
+}
+
+interface FirestoreErrorInfo {
+  error: string;
+  operationType: OperationType;
+  path: string | null;
+  authInfo: any;
+}
+
+function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  const errInfo: FirestoreErrorInfo = {
+    error: error instanceof Error ? error.message : String(error),
+    authInfo: {
+      userId: firebaseAuth.currentUser?.uid,
+      email: firebaseAuth.currentUser?.email,
+      emailVerified: firebaseAuth.currentUser?.emailVerified,
+    },
+    operationType,
+    path
+  };
+  console.error('Firestore Error: ', JSON.stringify(errInfo));
+  throw new Error(JSON.stringify(errInfo));
+}
 
 const Predict = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<Partial<CreditData>>({
     age: 30,
@@ -45,15 +80,30 @@ const Predict = () => {
     setTimeout(async () => {
       const result = mlService.predict(formData);
       
-      // Save to history via API
-      try {
-        await fetch('/api/predict', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ input: formData, result })
-        });
-      } catch (err) {
-        console.error("Failed to save history", err);
+      // Save to Firestore if logged in
+      if (user) {
+        const path = 'predictions';
+        try {
+          await addDoc(collection(db, path), {
+            userId: user.uid,
+            timestamp: new Date().toISOString(),
+            input: formData,
+            result
+          });
+        } catch (err) {
+          handleFirestoreError(err, OperationType.CREATE, path);
+        }
+      } else {
+        // Fallback to local API for anonymous users (if server.ts supports it)
+        try {
+          await fetch('/api/predict', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ input: formData, result })
+          });
+        } catch (err) {
+          console.error("Failed to save history locally", err);
+        }
       }
 
       setLoading(false);

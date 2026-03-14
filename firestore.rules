@@ -1,0 +1,107 @@
+// ===============================================================
+// Assumed Data Model
+// ===============================================================
+//
+// Collection: users
+// Document ID: {userId}
+// Fields:
+//   - uid: string (required) - The unique ID of the user.
+//   - email: string (required, email) - The user's email address.
+//   - displayName: string (optional) - The user's display name.
+//   - photoURL: string (optional) - The user's profile picture URL.
+//   - createdAt: string (optional, date-time) - When the profile was created.
+//
+// Collection: predictions
+// Document ID: {predictionId}
+// Fields:
+//   - userId: string (required) - The ID of the user who made the prediction.
+//   - timestamp: string (required, date-time) - When the prediction was made.
+//   - input: map (required) - The raw input data for the prediction.
+//   - result: map (required) - The result returned by the ML model.
+//
+// Collection: recommendations
+// Document ID: {recommendationId}
+// Fields:
+//   - userId: string (required) - The ID of the user.
+//   - timestamp: string (required, date-time) - When the recommendation was generated.
+//   - content: string (required) - The markdown content of the recommendation.
+//   - sources: list (optional) - URLs used for grounding.
+//
+// ===============================================================
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isDocOwner() {
+      return isAuthenticated() && request.auth.uid == resource.data.userId;
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function isValidDateString(dateStr) {
+      return dateStr is string && dateStr.matches("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.*Z?$");
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'email']) &&
+             data.uid == request.auth.uid &&
+             isValidEmail(data.email);
+    }
+
+    function isValidPrediction(data) {
+      return data.keys().hasAll(['userId', 'timestamp', 'input', 'result']) &&
+             data.userId == request.auth.uid &&
+             isValidDateString(data.timestamp);
+    }
+
+    function isValidRecommendation(data) {
+      return data.keys().hasAll(['userId', 'timestamp', 'content']) &&
+             data.userId == request.auth.uid &&
+             isValidDateString(data.timestamp) &&
+             data.content is string && data.content.size() < 10000;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUser(request.resource.data);
+      allow update: if isOwner(userId) && isValidUser(request.resource.data);
+    }
+
+    match /predictions/{predictionId} {
+      allow read: if isAuthenticated() && (resource == null || resource.data.userId == request.auth.uid);
+      allow create: if isAuthenticated() && isValidPrediction(request.resource.data);
+      allow update: if false; // Predictions are immutable
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+
+    match /recommendations/{recommendationId} {
+      allow read: if isAuthenticated() && (resource == null || resource.data.userId == request.auth.uid);
+      allow create: if isAuthenticated() && isValidRecommendation(request.resource.data);
+      allow update: if false; // Recommendations are immutable
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+  }
+}

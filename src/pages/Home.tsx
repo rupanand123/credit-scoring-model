@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ShieldCheck, TrendingUp, Zap, BarChart3, ArrowRight } from 'lucide-react';
+import { ShieldCheck, TrendingUp, Zap, BarChart3, ArrowRight, Coins, Sparkles, Globe } from 'lucide-react';
 import { motion } from 'motion/react';
 
 const Home = () => {
@@ -42,12 +42,47 @@ const Home = () => {
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Link>
             <Link 
-              to="/about" 
-              className="px-8 py-4 bg-slate-800 hover:bg-slate-700 text-white font-semibold rounded-xl border border-white/10 transition-all duration-200"
+              to="/currency-advisor" 
+              className="px-8 py-4 bg-slate-800 hover:bg-slate-700 text-white font-semibold rounded-xl border border-white/10 transition-all duration-200 flex items-center gap-2"
             >
-              Learn More
+              <Coins className="w-5 h-5 text-emerald-400" />
+              Currency Advisor
             </Link>
           </motion.div>
+        </div>
+      </section>
+
+      {/* New Feature Highlight */}
+      <section className="relative">
+        <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 to-blue-500/5 rounded-[3rem] -z-10" />
+        <div className="grid md:grid-cols-2 gap-12 items-center p-12">
+          <div className="space-y-6">
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-500/10 text-emerald-400 rounded-full text-xs font-bold uppercase tracking-widest">
+              <Sparkles className="w-3 h-3" /> New Feature
+            </div>
+            <h2 className="text-4xl font-bold">AI Currency Recommendations</h2>
+            <p className="text-slate-400 text-lg leading-relaxed">
+              Diversify your portfolio with AI-driven currency advice. Our model uses real-time Google Search data to analyze global market trends and provide personalized recommendations based on your financial health.
+            </p>
+            <Link 
+              to="/currency-advisor"
+              className="inline-flex items-center gap-2 text-emerald-400 font-bold hover:gap-3 transition-all"
+            >
+              Try Currency Advisor <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="p-6 bg-slate-900/50 border border-white/5 rounded-3xl space-y-4">
+              <Globe className="w-8 h-8 text-blue-400" />
+              <h4 className="font-bold">Global Data</h4>
+              <p className="text-xs text-slate-500">Real-time exchange rates and economic forecasts from around the world.</p>
+            </div>
+            <div className="p-6 bg-slate-900/50 border border-white/5 rounded-3xl space-y-4 translate-y-8">
+              <TrendingUp className="w-8 h-8 text-emerald-400" />
+              <h4 className="font-bold">Trend Analysis</h4>
+              <p className="text-xs text-slate-500">Sophisticated analysis of market volatility and growth potential.</p>
+            </div>
+          </div>
         </div>
       </section>
 

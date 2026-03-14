@@ -1,0 +1,55 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Stores user-specific information and preferences.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "The unique ID of the user." },
+        "email": { "type": "string", "format": "email", "description": "The user's email address." },
+        "displayName": { "type": "string", "description": "The user's display name." },
+        "photoURL": { "type": "string", "description": "The user's profile picture URL." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the profile was created." }
+      },
+      "required": ["uid", "email"]
+    },
+    "Prediction": {
+      "title": "Prediction Record",
+      "description": "A record of a credit assessment prediction.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "The ID of the user who made the prediction." },
+        "timestamp": { "type": "string", "format": "date-time", "description": "When the prediction was made." },
+        "input": { "type": "object", "description": "The raw input data for the prediction." },
+        "result": { "type": "object", "description": "The result returned by the ML model." }
+      },
+      "required": ["userId", "timestamp", "input", "result"]
+    },
+    "CurrencyRecommendation": {
+      "title": "Currency Recommendation",
+      "description": "AI-generated currency recommendations based on user profile and search data.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "The ID of the user." },
+        "timestamp": { "type": "string", "format": "date-time", "description": "When the recommendation was generated." },
+        "content": { "type": "string", "description": "The markdown content of the recommendation." },
+        "sources": { "type": "array", "items": { "type": "string" }, "description": "URLs used for grounding." }
+      },
+      "required": ["userId", "timestamp", "content"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profile documents."
+    },
+    "predictions/{predictionId}": {
+      "schema": "Prediction",
+      "description": "Collection of all credit predictions."
+    },
+    "recommendations/{recommendationId}": {
+      "schema": "CurrencyRecommendation",
+      "description": "Collection of currency recommendations."
+    }
+  }
+}
